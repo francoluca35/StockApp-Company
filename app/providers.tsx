@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 type UserContextType = {
   user: User | null
@@ -70,9 +71,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <UserContext.Provider value={{ user, loading }}>
-      {children}
-    </UserContext.Provider>
+    <ThemeProvider>
+      <UserContext.Provider value={{ user, loading }}>
+        {children}
+      </UserContext.Provider>
+    </ThemeProvider>
   )
 }
 

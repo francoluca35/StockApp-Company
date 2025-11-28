@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-import { LogIn, Loader2, AlertCircle } from 'lucide-react'
+import { LogIn, Loader2, AlertCircle, Sun, Moon } from 'lucide-react'
+import { useThemeStore } from '@/lib/store/themeStore'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [envError, setEnvError] = useState(false)
   const router = useRouter()
+  const { theme, toggleTheme } = useThemeStore()
 
   useEffect(() => {
     // Check if Supabase is configured with real values
@@ -104,12 +106,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark-bg p-4">
+    <div className="min-h-screen flex items-center justify-center dark:bg-dark-bg bg-light-bg p-4">
       <div className="w-full max-w-md">
+        <div className="absolute top-4 right-4">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg transition-colors dark:text-gray-400 dark:hover:text-white dark:hover:bg-dark-surface-light text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
+          </button>
+        </div>
         <div className="card">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold neon-text mb-2">StockApp</h1>
-            <p className="text-gray-400">Sistema de Gestión de Stock Industrial</p>
+            <p className="dark:text-gray-400 text-gray-600">Sistema de Gestión de Stock Industrial</p>
           </div>
 
           {envError && (
@@ -123,7 +138,7 @@ export default function LoginPage() {
                   </p>
                   <ol className="list-decimal list-inside space-y-1 text-xs text-orange-300 mb-2">
                     <li>Crea un proyecto en <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="underline">supabase.com</a></li>
-                    <li>Edita <code className="bg-dark-bg px-1 rounded">.env.local</code> con tus credenciales</li>
+                    <li>Edita <code className="dark:bg-dark-bg bg-light-bg px-1 rounded">.env.local</code> con tus credenciales</li>
                     <li>Ejecuta el SQL de <code className="bg-dark-bg px-1 rounded">supabase/schema.sql</code></li>
                   </ol>
                   <p className="text-xs text-orange-400">
@@ -192,12 +207,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-400">
+          <div className="mt-6 text-center text-sm dark:text-gray-400 text-gray-600">
             <p>¿No tienes cuenta? Contacta al administrador</p>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-xs text-gray-500">
+        <div className="mt-6 text-center text-xs dark:text-gray-500 text-gray-500">
           <p>Demo: admin@stockapp.com / password123</p>
         </div>
       </div>

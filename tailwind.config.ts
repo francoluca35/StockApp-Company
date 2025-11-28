@@ -21,6 +21,12 @@ const config: Config = {
           'surface-light': '#2a2a2a',
           border: '#333333',
         },
+        light: {
+          bg: '#f5f5f5',
+          surface: '#ffffff',
+          'surface-light': '#f9fafb',
+          border: '#e5e7eb',
+        },
       },
       animation: {
         'pulse-neon': 'pulse-neon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',

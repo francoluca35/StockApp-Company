@@ -16,8 +16,11 @@ import {
   X,
   User,
   Plus,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/types'
+import { useThemeStore } from '@/lib/store/themeStore'
 
 interface NavItem {
   name: string
@@ -45,6 +48,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createSupabaseClient()
+  const { theme, toggleTheme } = useThemeStore()
 
   useEffect(() => {
     const getUserData = async () => {
@@ -113,7 +117,7 @@ export default function DashboardLayout({
   )
 
   return (
-    <div className="min-h-screen bg-dark-bg">
+    <div className="min-h-screen dark:bg-dark-bg bg-light-bg">
       {/* Mobile sidebar */}
       <div
         className={`fixed inset-0 z-50 lg:hidden ${
@@ -124,7 +128,7 @@ export default function DashboardLayout({
           className="fixed inset-0 bg-black/50"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="fixed inset-y-0 left-0 w-64 bg-dark-surface border-r border-dark-border">
+        <div className="fixed inset-y-0 left-0 w-64 dark:bg-dark-surface bg-light-surface border-r dark:border-dark-border border-light-border">
           <SidebarContent
             nav={filteredNav}
             pathname={pathname}
@@ -138,7 +142,7 @@ export default function DashboardLayout({
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64">
-        <div className="bg-dark-surface border-r border-dark-border h-full">
+        <div className="dark:bg-dark-surface bg-light-surface border-r dark:border-dark-border border-light-border h-full">
           <SidebarContent
             nav={filteredNav}
             pathname={pathname}
@@ -152,18 +156,29 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 bg-dark-surface border-b border-dark-border">
+        <div className="sticky top-0 z-40 dark:bg-dark-surface bg-light-surface border-b dark:border-dark-border border-light-border">
           <div className="flex h-16 items-center gap-x-4 px-4 sm:px-6 lg:px-8">
             <button
               type="button"
-              className="lg:hidden text-gray-400 hover:text-white"
+              className="lg:hidden dark:text-gray-400 dark:hover:text-white text-gray-600 hover:text-gray-900"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="flex-1" />
             <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-400">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg transition-colors dark:text-gray-400 dark:hover:text-white dark:hover:bg-dark-surface-light text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                title={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-5 h-5" />
+                ) : (
+                  <Moon className="w-5 h-5" />
+                )}
+              </button>
+              <div className="text-sm dark:text-gray-400 text-gray-600">
                 <User className="w-4 h-4 inline mr-1" />
                 {userEmail}
                 {userRole === 'admin' && (
@@ -200,12 +215,12 @@ function SidebarContent({
 }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between h-16 px-6 border-b border-dark-border">
+      <div className="flex items-center justify-between h-16 px-6 border-b dark:border-dark-border border-light-border">
         <h1 className="text-xl font-bold neon-text">StockApp</h1>
         {onClose && (
           <button
             onClick={onClose}
-            className="lg:hidden text-gray-400 hover:text-white"
+            className="lg:hidden dark:text-gray-400 dark:hover:text-white text-gray-600 hover:text-gray-900"
           >
             <X className="w-6 h-6" />
           </button>
@@ -223,7 +238,7 @@ function SidebarContent({
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                 isActive
                   ? 'bg-neon-green/20 text-neon-green border border-neon-green/30'
-                  : 'text-gray-400 hover:text-white hover:bg-dark-surface-light'
+                  : 'dark:text-gray-400 dark:hover:text-white dark:hover:bg-dark-surface-light text-gray-600 hover:text-gray-900 hover:bg-light-surface-light'
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -233,10 +248,10 @@ function SidebarContent({
         })}
       </nav>
 
-      <div className="p-4 border-t border-dark-border">
+      <div className="p-4 border-t dark:border-dark-border border-light-border">
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 text-gray-400 hover:text-white hover:bg-dark-surface-light rounded-lg transition-all"
+          className="flex items-center gap-3 w-full px-4 py-3 dark:text-gray-400 dark:hover:text-white dark:hover:bg-dark-surface-light text-gray-600 hover:text-gray-900 hover:bg-light-surface-light rounded-lg transition-all"
         >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Cerrar Sesión</span>
