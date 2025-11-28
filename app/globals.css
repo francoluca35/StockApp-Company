@@ -4,36 +4,75 @@
 
 @layer base {
   body {
-    @apply bg-dark-bg text-white antialiased;
+    @apply antialiased;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
+  }
+
+  /* Dark theme */
+  .dark body {
+    @apply bg-dark-bg text-white;
+  }
+
+  /* Light theme */
+  .light body {
+    @apply bg-light-bg text-gray-900;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-neon-green text-dark-bg font-semibold px-6 py-3 rounded-lg 
+    @apply bg-neon-green font-semibold px-6 py-3 rounded-lg 
            hover:bg-neon-green-dark transition-all duration-200 
            shadow-lg shadow-neon-green/20 hover:shadow-neon-green/40
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  .dark .btn-primary {
+    @apply text-dark-bg;
+  }
+
+  .light .btn-primary {
+    @apply text-gray-900;
+  }
+
   .btn-secondary {
-    @apply bg-dark-surface border border-dark-border text-white font-semibold 
-           px-6 py-3 rounded-lg hover:bg-dark-surface-light transition-all 
+    @apply font-semibold px-6 py-3 rounded-lg transition-all 
            duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  .dark .btn-secondary {
+    @apply bg-dark-surface border border-dark-border text-white hover:bg-dark-surface-light;
+  }
+
+  .light .btn-secondary {
+    @apply bg-light-surface border border-light-border text-gray-900 hover:bg-light-surface-light;
+  }
+
   .input-field {
-    @apply w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-3 
-           text-white placeholder-gray-500 focus:outline-none focus:ring-2 
+    @apply w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 
            focus:ring-neon-green focus:border-transparent transition-all;
   }
 
+  .dark .input-field {
+    @apply bg-dark-surface border border-dark-border text-white placeholder-gray-500;
+  }
+
+  .light .input-field {
+    @apply bg-light-surface border border-light-border text-gray-900 placeholder-gray-400;
+  }
+
   .card {
-    @apply bg-dark-surface border border-dark-border rounded-xl p-6 
-           shadow-lg shadow-black/20;
+    @apply rounded-xl p-6 shadow-lg;
+  }
+
+  .dark .card {
+    @apply bg-dark-surface border border-dark-border shadow-black/20;
+  }
+
+  .light .card {
+    @apply bg-light-surface border border-light-border shadow-gray-200/50;
   }
 
   .neon-text {

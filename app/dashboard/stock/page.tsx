@@ -216,7 +216,7 @@ export default function StockPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">Stocks</h1>
-          <p className="text-gray-400">Lista de todos los productos agregados al inventario</p>
+          <p className="dark:text-gray-400 text-gray-600">Lista de todos los productos agregados al inventario</p>
         </div>
         <button
           onClick={exportToCSV}
@@ -232,7 +232,7 @@ export default function StockPage() {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 dark:text-gray-400 text-gray-500" />
               <input
                 type="text"
                 value={searchTerm}
@@ -248,7 +248,7 @@ export default function StockPage() {
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 filter === 'all'
                   ? 'bg-neon-green/20 text-neon-green border border-neon-green/30'
-                  : 'bg-dark-surface-light text-gray-400 hover:text-white'
+                  : 'dark:bg-dark-surface-light dark:text-gray-400 dark:hover:text-white bg-light-surface-light text-gray-600 hover:text-gray-900'
               }`}
             >
               Todos ({totalProducts})
@@ -258,7 +258,7 @@ export default function StockPage() {
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 filter === 'low'
                   ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
-                  : 'bg-dark-surface-light text-gray-400 hover:text-white'
+                  : 'dark:bg-dark-surface-light dark:text-gray-400 dark:hover:text-white bg-light-surface-light text-gray-600 hover:text-gray-900'
               }`}
             >
               Stock Bajo ({lowStockCount})
@@ -268,7 +268,7 @@ export default function StockPage() {
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 filter === 'out'
                   ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  : 'bg-dark-surface-light text-gray-400 hover:text-white'
+                  : 'dark:bg-dark-surface-light dark:text-gray-400 dark:hover:text-white bg-light-surface-light text-gray-600 hover:text-gray-900'
               }`}
             >
               Sin Stock ({outOfStockCount})
@@ -282,22 +282,22 @@ export default function StockPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-dark-border">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-400">Producto</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-400">SKU</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-400">Código</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-400">Categoría</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-400">Stock Actual</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-400">Unidad</th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-400">Stock Mínimo</th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-400">Estado</th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-400">Acciones</th>
+              <tr className="border-b dark:border-dark-border border-light-border">
+                <th className="text-left py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Producto</th>
+                <th className="text-left py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">SKU</th>
+                <th className="text-left py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Código</th>
+                <th className="text-left py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Categoría</th>
+                <th className="text-right py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Stock Actual</th>
+                <th className="text-left py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Unidad</th>
+                <th className="text-right py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Stock Mínimo</th>
+                <th className="text-left py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Estado</th>
+                <th className="text-center py-3 px-4 text-sm font-medium dark:text-gray-400 text-gray-600">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-8 text-gray-500">
+                  <td colSpan={9} className="text-center py-8 dark:text-gray-500 text-gray-500">
                     No se encontraron productos
                   </td>
                 </tr>
@@ -309,18 +309,18 @@ export default function StockPage() {
                   return (
                     <tr
                       key={product.id}
-                      className="border-b border-dark-border hover:bg-dark-surface-light transition-colors"
+                      className="border-b dark:border-dark-border border-light-border dark:hover:bg-dark-surface-light hover:bg-light-surface-light transition-colors"
                     >
                       <td className="py-3 px-4 font-medium">
                         {product.name}
                       </td>
-                      <td className="py-3 px-4 text-gray-400 font-mono text-sm">
+                      <td className="py-3 px-4 dark:text-gray-400 text-gray-600 font-mono text-sm">
                         {product.sku}
                       </td>
-                      <td className="py-3 px-4 text-gray-400 font-mono text-sm">
+                      <td className="py-3 px-4 dark:text-gray-400 text-gray-600 font-mono text-sm">
                         {product.barcode || '-'}
                       </td>
-                      <td className="py-3 px-4 text-gray-400 text-sm">
+                      <td className="py-3 px-4 dark:text-gray-400 text-gray-600 text-sm">
                         {product.category || '-'}
                       </td>
                       <td className="py-3 px-4 text-right font-medium">
@@ -336,10 +336,10 @@ export default function StockPage() {
                           {product.current_stock}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-gray-400 text-sm">
+                      <td className="py-3 px-4 dark:text-gray-400 text-gray-600 text-sm">
                         {product.unit}
                       </td>
-                      <td className="py-3 px-4 text-right text-gray-400 text-sm">
+                      <td className="py-3 px-4 text-right dark:text-gray-400 text-gray-600 text-sm">
                         {product.min_stock}
                       </td>
                       <td className="py-3 px-4">
@@ -389,29 +389,29 @@ export default function StockPage() {
       {/* Modal para editar stock */}
       {isEditing && editingProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-dark-surface border border-dark-border rounded-lg p-6 w-full max-w-md">
+          <div className="dark:bg-dark-surface bg-light-surface border dark:border-dark-border border-light-border rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Editar Stock</h2>
+              <h2 className="text-xl font-bold dark:text-white text-gray-900">Editar Stock</h2>
               <button
                 onClick={handleCancelEdit}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="dark:text-gray-400 dark:hover:text-white text-gray-600 hover:text-gray-900 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="mb-4">
-              <div className="p-3 bg-dark-surface-light rounded-lg mb-4">
-                <div className="font-medium text-white">{editingProduct.name}</div>
-                <div className="text-sm text-gray-400 mt-1">
+              <div className="p-3 dark:bg-dark-surface-light bg-light-surface-light rounded-lg mb-4">
+                <div className="font-medium dark:text-white text-gray-900">{editingProduct.name}</div>
+                <div className="text-sm dark:text-gray-400 text-gray-600 mt-1">
                   SKU: {editingProduct.sku}
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm dark:text-gray-400 text-gray-600">
                   Stock actual: <span className="text-neon-green font-bold">{editingProduct.current_stock}</span> {editingProduct.unit}
                 </div>
               </div>
 
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 dark:text-white text-gray-900">
                 Nuevo Stock *
               </label>
               <input
@@ -423,7 +423,7 @@ export default function StockPage() {
                 placeholder="Ingresa el nuevo stock"
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs dark:text-gray-500 text-gray-500 mt-1">
                 Unidad: {editingProduct.unit}
               </p>
             </div>
@@ -431,7 +431,7 @@ export default function StockPage() {
             <div className="flex gap-3">
               <button
                 onClick={handleCancelEdit}
-                className="flex-1 px-4 py-2 bg-dark-surface-light text-gray-400 rounded-lg hover:bg-dark-border transition-colors"
+                className="flex-1 px-4 py-2 dark:bg-dark-surface-light dark:text-gray-400 dark:hover:bg-dark-border bg-light-surface-light text-gray-600 hover:bg-light-border rounded-lg transition-colors"
               >
                 Cancelar
               </button>
