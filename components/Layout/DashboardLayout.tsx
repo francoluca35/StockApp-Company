@@ -18,6 +18,8 @@ import {
   Plus,
   Sun,
   Moon,
+  UserCog,
+  ShoppingCart,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/types'
 import { useThemeStore } from '@/lib/store/themeStore'
@@ -31,9 +33,11 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Venta Producto', href: '/dashboard/ventas', icon: ShoppingCart },
   { name: 'Agregar Producto', href: '/dashboard/entradas', icon: Plus },
   { name: 'Stocks', href: '/dashboard/stock', icon: BarChart3 },
   { name: 'Stock de Salidas', href: '/dashboard/stock-salidas', icon: ArrowDownCircle },
+  { name: 'Configuración', href: '/dashboard/configuracion', icon: UserCog },
   { name: 'Administración', href: '/dashboard/admin', icon: Settings, roles: ['admin'] },
 ]
 
