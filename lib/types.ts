@@ -32,6 +32,10 @@ export interface Movement {
   reason?: string
   user_id: string
   created_at: string
+  fecha?: string // Fecha del movimiento (YYYY-MM-DD)
+  hora?: string // Hora del movimiento (HH:MM:SS)
+  tiempo_produccion?: number // Tiempo de producción en minutos (solo para entradas)
+  despachado_por?: string // Nombre de quien despachó (solo para salidas)
   product?: Product
   user?: User
 }

@@ -28,10 +28,9 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Productos', href: '/dashboard/products', icon: Package },
-  { name: 'Agregar Nuevo Producto', href: '/dashboard/entradas', icon: Plus },
-  { name: 'Salidas', href: '/dashboard/salidas', icon: ArrowUpCircle },
-  { name: 'Stock', href: '/dashboard/stock', icon: BarChart3 },
+  { name: 'Agregar Producto', href: '/dashboard/entradas', icon: Plus },
+  { name: 'Stocks', href: '/dashboard/stock', icon: BarChart3 },
+  { name: 'Stock de Salidas', href: '/dashboard/stock-salidas', icon: ArrowDownCircle },
   { name: 'Administración', href: '/dashboard/admin', icon: Settings, roles: ['admin'] },
 ]
 
