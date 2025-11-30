@@ -13,6 +13,12 @@ export default function StockPage() {
   const [filter, setFilter] = useState<'all' | 'low' | 'out'>('all')
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [newStock, setNewStock] = useState('')
+  const [editProductData, setEditProductData] = useState({
+    stock: '',
+    price: '',
+    barcode: '',
+    category: '',
+  })
   const [isEditing, setIsEditing] = useState(false)
   const supabase = createSupabaseClient()
 
@@ -128,13 +134,19 @@ export default function StockPage() {
   const handleEditStock = (product: Product) => {
     setEditingProduct(product)
     setNewStock(product.current_stock.toString())
+    setEditProductData({
+      stock: product.current_stock.toString(),
+      price: product.price?.toString() || '',
+      barcode: product.barcode || '',
+      category: product.category || '',
+    })
     setIsEditing(true)
   }
 
   const handleSaveStock = async () => {
     if (!editingProduct) return
 
-    const stockValue = parseInt(newStock)
+    const stockValue = parseInt(editProductData.stock)
     if (isNaN(stockValue) || stockValue < 0) {
       Swal.fire({
         title: 'Error de validación',
@@ -145,10 +157,31 @@ export default function StockPage() {
       return
     }
 
+    const priceValue = editProductData.price ? parseFloat(editProductData.price) : null
+    if (editProductData.price && (isNaN(priceValue!) || priceValue! < 0)) {
+      Swal.fire({
+        title: 'Error de validación',
+        text: 'Por favor ingresa un precio válido',
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      })
+      return
+    }
+
     // Confirmar antes de guardar
     const result = await Swal.fire({
       title: '¿Estás seguro?',
-      text: `¿Deseas actualizar el stock de "${editingProduct.name}" a ${stockValue} ${editingProduct.unit}?`,
+      html: `
+        <div class="text-left">
+          <p class="mb-2">¿Deseas actualizar el producto "${editingProduct.name}"?</p>
+          <ul class="text-sm space-y-1">
+            <li>Stock: ${stockValue} ${editingProduct.unit}</li>
+            ${priceValue ? `<li>Precio: $${priceValue.toFixed(2)}</li>` : ''}
+            ${editProductData.barcode ? `<li>Código: ${editProductData.barcode}</li>` : ''}
+            ${editProductData.category ? `<li>Categoría: ${editProductData.category}</li>` : ''}
+          </ul>
+        </div>
+      `,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
@@ -165,7 +198,12 @@ export default function StockPage() {
     try {
       const { error } = await supabase
         .from('products')
-        .update({ current_stock: stockValue })
+        .update({
+          current_stock: stockValue,
+          price: priceValue,
+          barcode: editProductData.barcode || null,
+          category: editProductData.category || null,
+        })
         .eq('id', editingProduct.id)
 
       if (error) throw error
@@ -174,19 +212,25 @@ export default function StockPage() {
       setIsEditing(false)
       setEditingProduct(null)
       setNewStock('')
+      setEditProductData({
+        stock: '',
+        price: '',
+        barcode: '',
+        category: '',
+      })
       await loadProducts()
       
       Swal.fire({
         title: '¡Actualizado!',
-        text: 'El stock ha sido actualizado correctamente.',
+        text: 'El producto ha sido actualizado correctamente.',
         icon: 'success',
         confirmButtonColor: '#10b981'
       })
     } catch (error) {
-      console.error('Error updating stock:', error)
+      console.error('Error updating product:', error)
       Swal.fire({
         title: 'Error',
-        text: 'Error al actualizar el stock',
+        text: 'Error al actualizar el producto',
         icon: 'error',
         confirmButtonColor: '#ef4444'
       })
@@ -197,6 +241,12 @@ export default function StockPage() {
     setIsEditing(false)
     setEditingProduct(null)
     setNewStock('')
+    setEditProductData({
+      stock: '',
+      price: '',
+      barcode: '',
+      category: '',
+    })
   }
 
   const lowStockCount = products.filter(p => p.current_stock <= p.min_stock && p.current_stock > 0).length
@@ -391,7 +441,7 @@ export default function StockPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="dark:bg-dark-surface bg-light-surface border dark:border-dark-border border-light-border rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold dark:text-white text-gray-900">Editar Stock</h2>
+              <h2 className="text-xl font-bold dark:text-white text-gray-900">Editar Producto</h2>
               <button
                 onClick={handleCancelEdit}
                 className="dark:text-gray-400 dark:hover:text-white text-gray-600 hover:text-gray-900 transition-colors"
@@ -400,8 +450,8 @@ export default function StockPage() {
               </button>
             </div>
             
-            <div className="mb-4">
-              <div className="p-3 dark:bg-dark-surface-light bg-light-surface-light rounded-lg mb-4">
+            <div className="mb-4 space-y-4">
+              <div className="p-3 dark:bg-dark-surface-light bg-light-surface-light rounded-lg">
                 <div className="font-medium dark:text-white text-gray-900">{editingProduct.name}</div>
                 <div className="text-sm dark:text-gray-400 text-gray-600 mt-1">
                   SKU: {editingProduct.sku}
@@ -411,21 +461,64 @@ export default function StockPage() {
                 </div>
               </div>
 
-              <label className="block text-sm font-medium mb-2 dark:text-white text-gray-900">
-                Nuevo Stock *
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={newStock}
-                onChange={(e) => setNewStock(e.target.value)}
-                className="input-field w-full"
-                placeholder="Ingresa el nuevo stock"
-                autoFocus
-              />
-              <p className="text-xs dark:text-gray-500 text-gray-500 mt-1">
-                Unidad: {editingProduct.unit}
-              </p>
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-white text-gray-900">
+                  Stock *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editProductData.stock}
+                  onChange={(e) => setEditProductData({ ...editProductData, stock: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Ingresa el nuevo stock"
+                  autoFocus
+                />
+                <p className="text-xs dark:text-gray-500 text-gray-500 mt-1">
+                  Unidad: {editingProduct.unit}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-white text-gray-900">
+                  Precio Unitario
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editProductData.price}
+                  onChange={(e) => setEditProductData({ ...editProductData, price: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Ej: 150.50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-white text-gray-900">
+                  Código de Barras
+                </label>
+                <input
+                  type="text"
+                  value={editProductData.barcode}
+                  onChange={(e) => setEditProductData({ ...editProductData, barcode: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Ej: 1234567890123"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 dark:text-white text-gray-900">
+                  Categoría
+                </label>
+                <input
+                  type="text"
+                  value={editProductData.category}
+                  onChange={(e) => setEditProductData({ ...editProductData, category: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Ej: Snacks, Bebidas..."
+                />
+              </div>
             </div>
 
             <div className="flex gap-3">

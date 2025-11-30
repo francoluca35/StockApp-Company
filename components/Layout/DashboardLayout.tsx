@@ -20,6 +20,7 @@ import {
   Moon,
   UserCog,
   ShoppingCart,
+  Network,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/types'
 import { useThemeStore } from '@/lib/store/themeStore'
@@ -38,6 +39,7 @@ const navigation: NavItem[] = [
   { name: 'Stocks', href: '/dashboard/stock', icon: BarChart3 },
   { name: 'Stock de Salidas', href: '/dashboard/stock-salidas', icon: ArrowDownCircle },
   { name: 'Configuración', href: '/dashboard/configuracion', icon: UserCog },
+  { name: 'Diagrama de Arquitectura', href: '/dashboard/diagrama', icon: Network },
   { name: 'Administración', href: '/dashboard/admin', icon: Settings, roles: ['admin'] },
 ]
 
