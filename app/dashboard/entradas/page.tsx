@@ -19,6 +19,8 @@ export default function EntradasPage() {
     category: '',
     unit: 'unidad',
     min_stock: 0,
+    price: '',
+    initial_stock: 0,
   })
   const [updateProductData, setUpdateProductData] = useState({
     stock: '',
@@ -68,7 +70,14 @@ export default function EntradasPage() {
 
     setLoading(true)
     try {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuario no autenticado')
+
+      const priceValue = newProductData.price ? parseFloat(newProductData.price) : null
+      const initialStock = parseInt(newProductData.initial_stock.toString()) || 0
+
+      // Crear el producto
+      const { data: newProduct, error } = await supabase
         .from('products')
         .insert({
           name: newProductData.name,
@@ -77,10 +86,34 @@ export default function EntradasPage() {
           category: newProductData.category || null,
           unit: newProductData.unit,
           min_stock: newProductData.min_stock,
-          current_stock: 0,
+          price: priceValue,
+          current_stock: initialStock,
         })
+        .select()
+        .single()
 
       if (error) throw error
+
+      // Si se especificó stock inicial, registrar un movimiento de entrada
+      if (initialStock > 0 && newProduct) {
+        const now = new Date()
+        const { error: movementError } = await supabase
+          .from('movements')
+          .insert({
+            product_id: newProduct.id,
+            type: 'entrada',
+            quantity: initialStock,
+            fecha: now.toISOString().split('T')[0],
+            hora: now.toTimeString().slice(0, 5),
+            user_id: user.id,
+            reason: 'Producto nuevo',
+          })
+
+        if (movementError) {
+          console.error('Error creating movement:', movementError)
+          // No lanzar error, solo loguear, ya que el producto se creó correctamente
+        }
+      }
 
       // Reset form
       setShowNewProductForm(false)
@@ -91,6 +124,8 @@ export default function EntradasPage() {
         category: '',
         unit: 'unidad',
         min_stock: 0,
+        price: '',
+        initial_stock: 0,
       })
       setSearchTerm('')
       loadProducts()
@@ -477,6 +512,41 @@ export default function EntradasPage() {
                   className="input-field"
                   placeholder="0"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Precio Unitario (opcional)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newProductData.price}
+                  onChange={(e) => setNewProductData({ ...newProductData, price: e.target.value })}
+                  className="input-field"
+                  placeholder="Ej: 150.50"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Precio de venta por unidad
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Stock Inicial (opcional)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={newProductData.initial_stock}
+                  onChange={(e) => setNewProductData({ ...newProductData, initial_stock: parseInt(e.target.value) || 0 })}
+                  className="input-field"
+                  placeholder="0"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Si especificas stock inicial, se registrará como entrada en movimientos
+                </p>
               </div>
 
               <div className="flex gap-3">

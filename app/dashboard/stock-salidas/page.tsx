@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
-import { Search, ArrowUpCircle, Download, Calendar, RefreshCw } from 'lucide-react'
+import { Search, ArrowUpCircle, Download, Calendar, RefreshCw, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react'
 import type { Movement } from '@/lib/types'
 import Swal from 'sweetalert2'
+import * as XLSX from 'xlsx'
 
 export default function StockSalidasPage() {
   const [salidas, setSalidas] = useState<Movement[]>([])
@@ -12,6 +13,9 @@ export default function StockSalidasPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
+  const [sortOrder, setSortOrder] = useState<'fecha-reciente' | 'fecha-antiguo' | 'precio-mayor' | 'precio-menor'>('fecha-reciente')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
   const supabase = createSupabaseClient()
 
   useEffect(() => {
@@ -135,43 +139,156 @@ export default function StockSalidasPage() {
     )
   })
 
+  // Ordenar las salidas según el filtro seleccionado
+  const sortedSalidas = [...filteredSalidas].sort((a, b) => {
+    switch (sortOrder) {
+      case 'fecha-reciente':
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      case 'fecha-antiguo':
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      case 'precio-mayor': {
+        const totalA = (a.product?.price || 0) * a.quantity
+        const totalB = (b.product?.price || 0) * b.quantity
+        return totalB - totalA
+      }
+      case 'precio-menor': {
+        const totalA = (a.product?.price || 0) * a.quantity
+        const totalB = (b.product?.price || 0) * b.quantity
+        return totalA - totalB
+      }
+      default:
+        return 0
+    }
+  })
+
+  // Calcular paginación
+  const totalPages = Math.ceil(sortedSalidas.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedSalidas = sortedSalidas.slice(startIndex, endIndex)
+
+  // Resetear a página 1 cuando cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, fechaDesde, fechaHasta, sortOrder])
+
   const exportToCSV = () => {
-    const headers = ['Fecha', 'Hora', 'Producto', 'SKU', 'Cantidad', 'Unidad', 'Precio Unitario', 'Total', 'Despachado Por', 'Registrado']
-    const rows = filteredSalidas.map((salida) => {
-      const unitPrice = salida.product?.price || 0
-      const total = unitPrice * salida.quantity
-      return [
-        salida.fecha ? new Date(salida.fecha).toLocaleDateString('es-AR') : 'N/A',
-        salida.hora || 'N/A',
-        salida.product?.name || 'N/A',
-        salida.product?.sku || 'N/A',
-        salida.quantity.toString(),
-        salida.product?.unit || 'N/A',
-        `$${unitPrice.toFixed(2)}`,
-        `$${total.toFixed(2)}`,
-        salida.despachado_por || 'N/A',
-        new Date(salida.created_at).toLocaleString('es-AR'),
+    try {
+      // Preparar los datos con formato adecuado (exportar todos los datos ordenados, no solo los paginados)
+      const rows = sortedSalidas.map((salida) => {
+        const unitPrice = salida.product?.price || 0
+        const total = unitPrice * salida.quantity
+        return {
+          'Fecha': salida.fecha ? new Date(salida.fecha).toLocaleDateString('es-AR') : new Date(salida.created_at).toLocaleDateString('es-AR'),
+          'Hora': salida.hora || new Date(salida.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+          'Producto': salida.product?.name || 'N/A',
+          'SKU': salida.product?.sku || 'N/A',
+          'Cantidad': salida.quantity,
+          'Unidad': salida.product?.unit || 'N/A',
+          'Precio Unitario': unitPrice,
+          'Total': total,
+          'Despachado Por': salida.despachado_por || 'N/A',
+          'Registrado': new Date(salida.created_at).toLocaleString('es-AR'),
+        }
+      })
+
+      // Crear el workbook
+      const wb = XLSX.utils.book_new()
+      
+      // Crear array de datos con información inicial
+      const wsData: any[] = []
+      
+      // Agregar información del reporte
+      wsData.push(['REPORTE DE SALIDAS DE STOCK'])
+      wsData.push([])
+      if (fechaDesde || fechaHasta) {
+        wsData.push(['Período:', `${fechaDesde || 'Inicio'} - ${fechaHasta || 'Hoy'}`])
+      }
+      wsData.push(['Total de registros:', sortedSalidas.length])
+      wsData.push(['Fecha de exportación:', new Date().toLocaleString('es-AR')])
+      wsData.push([])
+      
+      // Agregar encabezados
+      wsData.push(['Fecha', 'Hora', 'Producto', 'SKU', 'Cantidad', 'Unidad', 'Precio Unitario ($)', 'Total ($)', 'Despachado Por', 'Registrado'])
+      
+      // Agregar filas de datos
+      rows.forEach(row => {
+        wsData.push([
+          row.Fecha,
+          row.Hora,
+          row.Producto,
+          row.SKU,
+          row.Cantidad,
+          row.Unidad,
+          row['Precio Unitario'],
+          row.Total,
+          row['Despachado Por'],
+          row.Registrado
+        ])
+      })
+      
+      // Agregar fila de totales
+      if (rows.length > 0) {
+        wsData.push([])
+        wsData.push([
+          '',
+          '',
+          'TOTALES',
+          '',
+          totalCantidad,
+          '',
+          '',
+          totalVentas,
+          '',
+          ''
+        ])
+      }
+      
+      // Crear la hoja
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      
+      // Configurar anchos de columnas para mejor legibilidad
+      ws['!cols'] = [
+        { wch: 12 }, // Fecha
+        { wch: 10 }, // Hora
+        { wch: 30 }, // Producto
+        { wch: 15 }, // SKU
+        { wch: 10 }, // Cantidad
+        { wch: 10 }, // Unidad
+        { wch: 15 }, // Precio Unitario
+        { wch: 15 }, // Total
+        { wch: 25 }, // Despachado Por
+        { wch: 20 }, // Registrado
       ]
-    })
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n')
+      // Agregar la hoja al workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Salidas de Stock')
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `stock_salidas_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+      // Generar el archivo
+      const fileName = `stock_salidas_${new Date().toISOString().split('T')[0]}.xlsx`
+      XLSX.writeFile(wb, fileName)
+      
+      Swal.fire({
+        title: '¡Éxito!',
+        text: 'El archivo Excel se ha generado correctamente',
+        icon: 'success',
+        confirmButtonColor: '#10b981',
+        timer: 2000,
+        showConfirmButton: false
+      })
+    } catch (error) {
+      console.error('Error exporting to Excel:', error)
+      Swal.fire({
+        title: 'Error',
+        text: 'Error al exportar a Excel',
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+      })
+    }
   }
 
-  const totalCantidad = filteredSalidas.reduce((sum, salida) => sum + salida.quantity, 0)
-  const totalVentas = filteredSalidas.reduce((sum, salida) => {
+  const totalCantidad = sortedSalidas.reduce((sum, salida) => sum + salida.quantity, 0)
+  const totalVentas = sortedSalidas.reduce((sum, salida) => {
     const unitPrice = salida.product?.price || 0
     return sum + (unitPrice * salida.quantity)
   }, 0)
@@ -205,15 +322,38 @@ export default function StockSalidasPage() {
             className="btn-secondary flex items-center gap-2"
           >
             <Download className="w-5 h-5" />
-            Exportar CSV
+            Exportar Excel
           </button>
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="card">
+          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Total de Salidas</div>
+          <div className="text-2xl font-bold text-red-400">{sortedSalidas.length}</div>
+        </div>
+        <div className="card">
+          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Cantidad Total</div>
+          <div className="text-2xl font-bold text-red-400">{totalCantidad}</div>
+        </div>
+        <div className="card">
+          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Total Ventas</div>
+          <div className="text-2xl font-bold text-neon-green">${totalVentas.toFixed(2)}</div>
+        </div>
+        <div className="card">
+          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Período</div>
+          <div className="text-sm font-medium dark:text-white text-gray-900">
+            {fechaDesde || 'Inicio'} - {fechaHasta || 'Hoy'}
+          </div>
         </div>
       </div>
 
       {/* Filtros */}
       <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           <div className="md:col-span-2">
+            <label className="block text-xs dark:text-gray-400 text-gray-600 mb-1">Búsqueda</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -243,41 +383,36 @@ export default function StockSalidasPage() {
               className="input-field"
             />
           </div>
-          {(fechaDesde || fechaHasta) && (
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setFechaDesde('')
-                  setFechaHasta('')
-                }}
-                className="btn-secondary w-full"
-              >
-                Limpiar Filtros
-              </button>
-            </div>
-          )}
         </div>
-      </div>
-
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Total de Salidas</div>
-          <div className="text-2xl font-bold text-red-400">{filteredSalidas.length}</div>
-        </div>
-        <div className="card">
-          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Cantidad Total</div>
-          <div className="text-2xl font-bold text-red-400">{totalCantidad}</div>
-        </div>
-        <div className="card">
-          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Total Ventas</div>
-          <div className="text-2xl font-bold text-neon-green">${totalVentas.toFixed(2)}</div>
-        </div>
-        <div className="card">
-          <div className="text-sm dark:text-gray-400 text-gray-600 mb-1">Período</div>
-          <div className="text-sm font-medium dark:text-white text-gray-900">
-            {fechaDesde || 'Inicio'} - {fechaHasta || 'Hoy'}
+        
+        {/* Filtro de ordenamiento */}
+        <div className="flex items-center gap-4 pt-4 border-t dark:border-dark-border border-light-border">
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="w-4 h-4 dark:text-gray-400 text-gray-600" />
+            <label className="text-sm dark:text-gray-400 text-gray-600 font-medium">Ordenar por:</label>
           </div>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as any)}
+            className="input-field flex-1 max-w-xs"
+          >
+            <option value="fecha-reciente">Fecha: Reciente → Antiguo</option>
+            <option value="fecha-antiguo">Fecha: Antiguo → Reciente</option>
+            <option value="precio-mayor">Precio: Mayor → Menor</option>
+            <option value="precio-menor">Precio: Menor → Mayor</option>
+          </select>
+          
+          {(fechaDesde || fechaHasta) && (
+            <button
+              onClick={() => {
+                setFechaDesde('')
+                setFechaHasta('')
+              }}
+              className="btn-secondary"
+            >
+              Limpiar Filtros
+            </button>
+          )}
         </div>
       </div>
 
@@ -298,14 +433,14 @@ export default function StockSalidasPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredSalidas.length === 0 ? (
+              {paginatedSalidas.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center py-8 dark:text-gray-500 text-gray-500">
+                  <td colSpan={8} className="text-center py-8 dark:text-gray-500 text-gray-500">
                     No se encontraron salidas
                   </td>
                 </tr>
               ) : (
-                filteredSalidas.map((salida) => {
+                paginatedSalidas.map((salida) => {
                   const unitPrice = salida.product?.price || 0
                   const total = unitPrice * salida.quantity
                   return (
@@ -353,6 +488,69 @@ export default function StockSalidasPage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t dark:border-dark-border border-light-border">
+            <div className="text-sm dark:text-gray-400 text-gray-600">
+              Mostrando {startIndex + 1} - {Math.min(endIndex, sortedSalidas.length)} de {sortedSalidas.length} salidas
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Anterior
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Mostrar solo algunas páginas alrededor de la actual
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          currentPage === page
+                            ? 'bg-neon-green text-gray-900'
+                            : 'btn-secondary'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  } else if (
+                    page === currentPage - 2 ||
+                    page === currentPage + 2
+                  ) {
+                    return (
+                      <span key={page} className="px-2 text-gray-400">
+                        ...
+                      </span>
+                    )
+                  }
+                  return null
+                })}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Siguiente
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
